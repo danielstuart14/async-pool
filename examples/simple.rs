@@ -1,11 +1,13 @@
-use std::mem;
+//! This example demonstrates the use of the `async_pool` crate without any async executor.
+use core::mem;
 
-use atomic_pool::{pool, Box};
+use async_pool::{pool, Box};
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Packet(u32);
 
-pool!(PacketPool: [Packet; 4]);
+pool!(PacketPool: [Packet; 4], 0);
 
 fn main() {
     let box1 = Box::<PacketPool>::new(Packet(1));

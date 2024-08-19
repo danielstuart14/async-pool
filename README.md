@@ -1,8 +1,18 @@
-# atomic-pool
+# async-pool
 
-[![Documentation](https://docs.rs/atomic-pool/badge.svg)](https://docs.rs/atomic-pool)
+[![Documentation](https://docs.rs/async-pool/badge.svg)](https://docs.rs/async-pool)
 
-Statically allocated pool providing a std-like Box.
+Statically allocated pool providing a std-like Box, with hability to asynchronously wait for a pool slot to become available. 
+
+This crate is tailored to be used with no-std async runtimes, like [Embassy](https://embassy.dev/), but can also be used in std environments (check examples).
+
+## Dependencies 
+
+This crate uses the `AtomicWaker` functionality from `embassy-sync` crate, which in turn requires a critical section implementation. Check [critical-section](https://crates.io/crates/critical-section).
+
+## Previous work
+
+This crate is heavily based on [atomic-pool](https://github.com/embassy-rs/atomic-pool).
 
 ## License
 
