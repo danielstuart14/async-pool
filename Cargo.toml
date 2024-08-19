@@ -1,6 +1,6 @@
 [package]
 name = "async-pool"
-version = "1.1.0"
+version = "1.1.1"
 authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
 description = "Statically allocated pool providing a std-like Box, with async functionality."
 repository = "https://github.com/danielstuart14/async-pool"
@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 categories = ["embedded", "no-std", "concurrency", "memory-management"]
 
 [dependencies]
-atomic-polyfill = "1.0"
+portable-atomic = { version = "1.7.0", features = ["critical-section"] }
 as-slice-01 = { package = "as-slice", version = "0.1.5" }
 as-slice-02 = { package = "as-slice", version = "0.2.1" }
 stable_deref_trait = { version = "1.2.0", default-features = false }

@@ -1,6 +1,6 @@
 pub mod droppable_bit;
 
-use atomic_polyfill::{AtomicU32, Ordering};
+use portable_atomic::{AtomicU32, Ordering};
 
 /// A bitset that can be used to allocate slots in a pool
 pub struct AtomicBitset<const N: usize, const K: usize>
