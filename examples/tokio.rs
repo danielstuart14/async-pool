@@ -1,7 +1,7 @@
 //! This example demonstrates the use of the `async_pool` crate with the `tokio` framework.
 
-use tokio::time::sleep;
 use tokio::join;
+use tokio::time::sleep;
 
 use std::mem;
 use std::time::Duration;

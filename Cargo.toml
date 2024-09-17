@@ -1,6 +1,6 @@
 [package]
 name = "async-pool"
-version = "1.1.1"
+version = "1.2.0"
 authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
 description = "Statically allocated pool providing a std-like Box, with async functionality."
 repository = "https://github.com/danielstuart14/async-pool"

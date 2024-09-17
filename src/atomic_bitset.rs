@@ -20,7 +20,8 @@ where
     }
 
     pub fn alloc_droppable(&self) -> Option<droppable_bit::DroppableBit<N, K>> {
-        self.alloc().map(|i| droppable_bit::DroppableBit::new(self, i))
+        self.alloc()
+            .map(|i| droppable_bit::DroppableBit::new(self, i))
     }
 
     pub fn alloc(&self) -> Option<usize> {
