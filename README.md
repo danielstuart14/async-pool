@@ -1,5 +1,6 @@
 # async-pool
 
+[![Crates.io](https://img.shields.io/crates/v/async-pool.svg)](https://crates.io/crates/async-pool)
 [![Documentation](https://docs.rs/async-pool/badge.svg)](https://docs.rs/async-pool)
 
 Statically allocated pool providing a std-like Box, allowing to asynchronously await for a pool slot to become available. 

@@ -368,11 +368,14 @@ macro_rules! pool {
 
 #[cfg(test)]
 mod test {
+    use embassy_futures::yield_now;
+    use tokio::{join, select};
+
     use super::*;
     use core::mem;
 
     pool!(TestPool: [u32; 4], 0);
-    pool!(TestPool2: [u32; 4], 2);
+    pool!(TestPool2: [u32; 4], 1);
 
     #[test]
     fn test_pool() {
@@ -399,5 +402,57 @@ mod test {
         let pool1 = <TestPool as Pool>::get();
         let pool2 = <TestPool2 as Pool>::get();
         assert!(mem::size_of_val(pool1) < mem::size_of_val(pool2));
+    }
+
+    #[tokio::test]
+    async fn empty_async_pool() {
+        let b1 = Box::<TestPool>::new(111).unwrap();
+        let b2 = Box::<TestPool>::new_async(222).await.unwrap();
+        let b3 = Box::<TestPool>::new(333).unwrap();
+        let b4 = Box::<TestPool>::new_async(444).await.unwrap();
+        assert!(Box::<TestPool>::new_async(555).await.is_none());
+        assert_eq!(*b3, 333);
+        mem::drop(b3);
+        let b5 = Box::<TestPool>::new_async(555).await.unwrap();
+        assert!(Box::<TestPool>::new_async(666).await.is_none());
+        assert_eq!(*b1, 111);
+        assert_eq!(*b2, 222);
+        assert_eq!(*b4, 444);
+        assert_eq!(*b5, 555);
+    }
+
+    #[tokio::test]
+    async fn cancelled_future() {
+        let b1 = Box::<TestPool2>::new_async(111).await.unwrap();
+        let b2 = Box::<TestPool2>::new(222).unwrap();
+        let b3 = Box::<TestPool2>::new_async(333).await.unwrap();
+        let b4 = Box::<TestPool2>::new(444).unwrap();
+        assert_eq!(*b1, 111);
+        assert_eq!(*b2, 222);
+        assert_eq!(*b3, 333);
+        assert_eq!(*b4, 444);
+
+        let fut1 = async {
+            yield_now().await;
+            yield_now().await;
+        };
+
+        let fut2 = async { Box::<TestPool2>::new_async(555).await.unwrap() };
+
+        select! {
+            _ = fut1 => {},
+            v = fut2 => panic!("Future should have been cancelled: {:?}", v),
+        }
+
+        let fut3 = async {
+            yield_now().await;
+            yield_now().await;
+            mem::drop(b1);
+        };
+
+        let fut4 = Box::<TestPool2>::new_async(666);
+
+        let (b6, _) = join!(fut4, fut3);
+        assert_eq!(*b6.unwrap(), 666);
     }
 }
