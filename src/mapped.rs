@@ -10,12 +10,12 @@ use crate::Pool;
 /// A structure that wraps a boxed item from a pool and provides a mapped reference to it.
 ///
 /// This is useful when a specific part of a pooled item needs to be accessed separately.
-pub struct MappedBox<P: Pool, T: 'static> {
+pub struct MappedBox<P: Pool, T: 'static + ?Sized> {
     inner: UnsafeCell<Box<P>>, // Inner storage of the pooled item.
     value_ref: &'static mut T, // Mapped reference to a part of the pooled item.
 }
 
-impl<P: Pool, T: 'static> MappedBox<P, T> {
+impl<P: Pool, T: 'static + ?Sized> MappedBox<P, T> {
     /// Asynchronously creates a new `MappedBox`.
     ///
     /// # Arguments
@@ -70,7 +70,7 @@ impl<P: Pool, T: 'static> MappedBox<P, T> {
 }
 
 /// Extension trait providing mapping capabilities to `Box<P>`.
-pub trait BoxExt<P: Pool, T: 'static>: Sized {
+pub trait BoxExt<P: Pool, T: 'static + ?Sized>: Sized {
     /// Maps the current item into a `MappedBox` by applying a mapping function.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ pub trait BoxExt<P: Pool, T: 'static>: Sized {
     ///
     /// # Returns
     /// A `MappedBox<P, M>` containing the mapped reference.
-    fn map<'a: 'static, M: 'a, F: FnOnce(&'a mut T) -> &'a mut M>(
+    fn map<'a: 'static, M: 'a + ?Sized, F: FnOnce(&'a mut T) -> &'a mut M>(
         self,
         mapper: F,
     ) -> MappedBox<P, M> {
@@ -93,7 +93,7 @@ pub trait BoxExt<P: Pool, T: 'static>: Sized {
     ///
     /// # Returns
     /// A `Result<MappedBox<P, M>, E>` indicating success or failure.
-    fn try_map<'a: 'static, M: 'a, E, F: FnOnce(&'a mut T) -> Result<&'a mut M, E>>(
+    fn try_map<'a: 'static, M: 'a + ?Sized, E, F: FnOnce(&'a mut T) -> Result<&'a mut M, E>>(
         self,
         mapper: F,
     ) -> Result<MappedBox<P, M>, E>;
@@ -114,7 +114,12 @@ pub trait BoxExt<P: Pool, T: 'static>: Sized {
 }
 
 impl<P: Pool> BoxExt<P, P::Item> for Box<P> {
-    fn try_map<'a: 'static, M: 'a, E, F: FnOnce(&'a mut P::Item) -> Result<&'a mut M, E>>(
+    fn try_map<
+        'a: 'static,
+        M: 'a + ?Sized,
+        E,
+        F: FnOnce(&'a mut P::Item) -> Result<&'a mut M, E>,
+    >(
         self,
         mapper: F,
     ) -> Result<MappedBox<P, M>, E> {
@@ -131,7 +136,7 @@ impl<P: Pool> BoxExt<P, P::Item> for Box<P> {
 }
 
 impl<P: Pool, T> BoxExt<P, T> for MappedBox<P, T> {
-    fn try_map<'a: 'static, M: 'a, E, F: FnOnce(&'a mut T) -> Result<&'a mut M, E>>(
+    fn try_map<'a: 'static, M: 'a + ?Sized, E, F: FnOnce(&'a mut T) -> Result<&'a mut M, E>>(
         self,
         mapper: F,
     ) -> Result<MappedBox<P, M>, E> {
@@ -147,14 +152,14 @@ impl<P: Pool, T> BoxExt<P, T> for MappedBox<P, T> {
 }
 
 /// Allows conversion of `MappedBox` into its original boxed form.
-impl<P: Pool, T> Into<Box<P>> for MappedBox<P, T> {
+impl<P: Pool, T: ?Sized> Into<Box<P>> for MappedBox<P, T> {
     fn into(self) -> Box<P> {
         self.inner.into_inner()
     }
 }
 
 /// Implements `Deref` for `MappedBox`, allowing access to the mapped value.
-impl<P: Pool, T: 'static> Deref for MappedBox<P, T> {
+impl<P: Pool, T: 'static + ?Sized> Deref for MappedBox<P, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -163,9 +168,20 @@ impl<P: Pool, T: 'static> Deref for MappedBox<P, T> {
 }
 
 /// Implements `DerefMut` for `MappedBox`, allowing mutable access to the mapped value.
-impl<P: Pool, T: 'static> DerefMut for MappedBox<P, T> {
+impl<P: Pool, T: 'static + ?Sized> DerefMut for MappedBox<P, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.value_ref
+    }
+}
+
+impl<P: Pool, T: 'static + ?Sized> AsRef<T> for MappedBox<P, T> {
+    fn as_ref(&self) -> &T {
+        &self.value_ref
+    }
+}
+impl<P: Pool, T: 'static + ?Sized> AsMut<T> for MappedBox<P, T> {
+    fn as_mut(&mut self) -> &mut T {
+        &mut self.value_ref
     }
 }
 
@@ -227,5 +243,16 @@ mod tests {
             item.try_into().unwrap()
         });
         assert_eq!(*b, -1);
+    }
+
+    pool!(TestBufs: [[u8; 64]; 2], 3);
+
+    #[tokio::test]
+    async fn map_to_slice() {
+        let mut array = Box::<TestBufs>::new_async([0u8; 64]).await.expect("slot");
+        // write some bytes
+        array[4..32].copy_from_slice(&[42u8; 28]);
+        let slice = array.map(|array| &mut array[4..32]);
+        assert_eq!(slice.as_ref(), &[42u8; 28]);
     }
 }
