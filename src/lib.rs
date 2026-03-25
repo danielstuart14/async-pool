@@ -83,6 +83,17 @@ unsafe impl<T, const N: usize, const K: usize, const WN: usize, const WK: usize>
 {
 }
 
+impl<T, const N: usize, const K: usize, const WN: usize, const WK: usize> Default
+    for PoolStorageImpl<T, N, K, WN, WK>
+where
+    [AtomicU32; K]: Sized,
+    [AtomicU32; WK]: Sized,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, const N: usize, const K: usize, const WN: usize, const WK: usize>
     PoolStorageImpl<T, N, K, WN, WK>
 where
@@ -178,10 +189,7 @@ impl<P: Pool> Box<P> {
     /// Returns an item from the data pool, if available.
     /// Returns None if the data pool is full.
     pub fn new(item: P::Item) -> Option<Self> {
-        let p = match P::get().alloc() {
-            Some(p) => p,
-            None => return None,
-        };
+        let p = P::get().alloc()?;
         unsafe { p.as_ptr().write(item) };
         Some(Self { ptr: p })
     }
@@ -203,6 +211,9 @@ impl<P: Pool> Box<P> {
         res
     }
 
+    /// # Safety
+    ///
+    /// The caller must ensure the pointer is valid and that it will live long enough.
     pub unsafe fn from_raw(ptr: NonNull<P::Item>) -> Self {
         Self { ptr }
     }
