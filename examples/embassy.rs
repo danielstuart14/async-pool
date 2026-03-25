@@ -78,5 +78,5 @@ async fn run() {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    spawner.spawn(run()).unwrap();
+    spawner.spawn(run().unwrap());
 }

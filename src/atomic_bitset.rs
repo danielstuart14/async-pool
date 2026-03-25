@@ -19,7 +19,7 @@ where
         Self { used: [Z; K] }
     }
 
-    pub fn alloc_droppable(&self) -> Option<droppable_bit::DroppableBit<N, K>> {
+    pub fn alloc_droppable<'a>(&'a self) -> Option<droppable_bit::DroppableBit<'a, N, K>> {
         self.alloc()
             .map(|i| droppable_bit::DroppableBit::new(self, i))
     }

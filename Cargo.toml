@@ -10,24 +10,23 @@ license = "MIT OR Apache-2.0"
 categories = ["embedded", "no-std", "concurrency", "memory-management"]
 
 [dependencies]
-portable-atomic = { version = "1.7.0", features = ["critical-section"] }
+portable-atomic = { version = "1.13.1" }
 as-slice-01 = { package = "as-slice", version = "0.1.5" }
 as-slice-02 = { package = "as-slice", version = "0.2.1" }
-stable_deref_trait = { version = "1.2.0", default-features = false }
-embassy-sync = "0.6.0"
+stable_deref_trait = { version = "1.2.1", default-features = false }
+embassy-sync = "0.8.0"
 
 # Used by async tests and examples
 [dev-dependencies]
-embassy-executor = { version = "0.6.0", features = [
-    "arch-std",
+embassy-executor = { version = "0.10.0", features = [
+    "platform-std",
     "executor-thread",
-    "integrated-timers",
-    "task-arena-size-32768",
+    "embassy-time-driver",
 ] }
-embassy-time = { version = "0.3.2", features = ["std"] }
-embassy-futures = "0.1.1"
-critical-section = { version = "1.1", features = ["std"] }
+embassy-time = { version = "0.5.1", features = ["std"] }
+embassy-futures = "0.1.2"
 tokio = { version = "1", features = ["full"] }
+critical-section = { version = "1.2.0", features = ["std"] }
 
 [features]
 default = []

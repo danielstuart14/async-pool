@@ -3,17 +3,28 @@
 [![Crates.io](https://img.shields.io/crates/v/async-pool.svg)](https://crates.io/crates/async-pool)
 [![Documentation](https://docs.rs/async-pool/badge.svg)](https://docs.rs/async-pool)
 
-Statically allocated pool providing a std-like Box, allowing to asynchronously await for a pool slot to become available. 
+Statically allocated pool providing a std-like Box, allowing to asynchronously await for a pool slot to become available.
 
-It is tailored to be used with no-std async runtimes, like [Embassy](https://embassy.dev/), but can also be used in std environments (check examples). 
+It is tailored to be used with no-std async runtimes, like [Embassy](https://embassy.dev/), but can also be used in std environments (check examples).
 
 The most common use-case is sharing large memory regions on constrained devices (e.g. microcontrollers), where multiple tasks may need to use the memory for buffering an I/O or performing calculations, and having separate static buffers would be too costly.
 
 It is important to know that waiting forever for a memory slot to be available may dead-lock your code if done wrong. With that in mind, you should consider using a timeout when allocating asynchronously (e.g. [embassy_time::with_timeout](https://docs.rs/embassy-time/0.3.2/embassy_time/fn.with_timeout.html)).
 
-## Dependencies 
+## Atomic CAS
 
 This crate requires a critical section implementation. Check [critical-section](https://crates.io/crates/critical-section).
+
+On plataforms that do not support atomic CAS (e.g. Cortex-M0), you must also enable portable-atomic's `critical-section` feature.
+
+Here is an example of dependencies:
+
+```
+[dependencies]
+portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"]}
+async-pool = "1.3.0"
+```
 
 ## Example
 
