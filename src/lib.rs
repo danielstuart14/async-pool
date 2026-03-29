@@ -38,8 +38,10 @@
 //!}
 //! ```
 #![cfg_attr(not(test), no_std)]
+#![feature(never_type)]
 
 mod atomic_bitset;
+mod mapped;
 
 use core::cell::UnsafeCell;
 use core::future::{poll_fn, Future};
@@ -52,6 +54,8 @@ use embassy_sync::waitqueue::AtomicWaker;
 use portable_atomic::AtomicU32;
 
 use crate::atomic_bitset::AtomicBitset;
+
+pub use crate::mapped::*;
 
 /// Implementation detail. Not covered by semver guarantees.
 #[doc(hidden)]
